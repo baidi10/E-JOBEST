@@ -1,0 +1,56 @@
+# Rewrite rules and security
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /nextgen-jobs/
+    
+    # If the request is for an existing file or directory, skip rewriting
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+    
+    # Redirect to HTTPS (uncomment in production)
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+    
+    # Handle clean URLs for jobs
+    RewriteRule ^job/([a-zA-Z0-9-]+)/?$ pages/public/job-details.php?slug=$1 [L,QSA]
+    
+    # Handle clean URLs for companies
+    RewriteRule ^company/([a-zA-Z0-9-]+)/?$ pages/public/company-details.php?slug=$1 [L,QSA]
+    
+    # Handle clean URLs for job search
+    RewriteRule ^jobs/?$ pages/public/jobs.php [L,QSA]
+    
+    # Handle clean URLs for companies list
+    RewriteRule ^companies/?$ pages/public/companies.php [L,QSA]
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+    # Prevent clickjacking
+    Header set X-Frame-Options "SAMEORIGIN"
+    
+    # XSS protection
+    Header set X-XSS-Protection "1; mode=block"
+    
+    # Disable MIME type sniffing
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>
+
+# Prevent directory listings
+Options -Indexes
+
+# Protect sensitive files
+<FilesMatch "(\.env|\.git|\.htaccess|\.(config|json|lock|sql))$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# PHP settings
+<IfModule mod_php7.c>
+    php_flag display_errors Off
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_value max_input_time 300
+    php_value max_execution_time 300
+</IfModule>
